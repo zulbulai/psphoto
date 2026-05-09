@@ -5,6 +5,48 @@ import { useStore } from '../store/useStore';
 import { convertToPx, MM_TO_INCH, DPI } from '../lib/utils';
 import { Layout } from 'lucide-react';
 
+// Sub-component to handle individual photo rendering safely with hooks
+const PhotoItem: React.FC<{
+  processedImage: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  backgroundColor: string;
+  borderColor: string;
+  borderWidth: number;
+}> = ({ processedImage, x, y, width, height, backgroundColor, borderColor, borderWidth }) => {
+  const [img] = useImage(processedImage);
+  
+  return (
+    <Group x={x} y={y}>
+      {/* Background Color */}
+      <Rect width={width} height={height} fill={backgroundColor} />
+      
+      {/* Image */}
+      {img && (
+        <KonvaImage 
+          image={img} 
+          width={width} 
+          height={height} 
+          listening={false}
+        />
+      )}
+
+      {/* Border */}
+      {borderWidth > 0 && (
+        <Rect 
+          width={width} 
+          height={height} 
+          stroke={borderColor} 
+          strokeWidth={borderWidth} 
+          listening={false}
+        />
+      )}
+    </Group>
+  );
+};
+
 export const Workspace: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -20,13 +62,6 @@ export const Workspace: React.FC = () => {
     spacing,
     margin
   } = useStore();
-
-  // Create an array of image hooks for each item
-  const itemImages = items.map(item => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [img] = useImage(item.processedImage);
-    return { id: item.id, img };
-  });
 
   // Page dimensions in PX (300 DPI)
   const isPortrait = orientation === 'portrait';
@@ -54,13 +89,15 @@ export const Workspace: React.FC = () => {
     const list = [];
     let slotIndex = 0;
     
+    // Add specific quantities from items
     for (const item of items) {
         for (let q = 0; q < item.quantity; q++) {
             if (slotIndex >= totalSlots) break;
             const r = Math.floor(slotIndex / cols);
             const c = slotIndex % cols;
             list.push({
-                itemId: item.id,
+                id: `${item.id}-${q}`,
+                processedImage: item.processedImage,
                 x: marginPx + c * (photoW + spacingPx),
                 y: marginPx + r * (photoH + spacingPx)
             });
@@ -75,7 +112,8 @@ export const Workspace: React.FC = () => {
             const r = Math.floor(slotIndex / cols);
             const c = slotIndex % cols;
             list.push({
-                itemId: lastItem.id,
+                id: `fill-${slotIndex}`,
+                processedImage: lastItem.processedImage,
                 x: marginPx + c * (photoW + spacingPx),
                 y: marginPx + r * (photoH + spacingPx)
             });
@@ -175,36 +213,18 @@ export const Workspace: React.FC = () => {
               listening={false}
             />
 
-            {photos.map((p, i) => (
-              <Group key={i} x={p.x} y={p.y}>
-                {/* Photo Background Color */}
-                <Rect 
-                  width={photoW} 
-                  height={photoH} 
-                  fill={backgroundColor} 
-                />
-                
-                {/* Photo Image */}
-                {itemImages.find(img => img.id === p.itemId)?.img && (
-                  <KonvaImage 
-                    image={itemImages.find(img => img.id === p.itemId)!.img!} 
-                    width={photoW} 
-                    height={photoH} 
-                    listening={false}
-                  />
-                )}
-
-                {/* Border */}
-                {borderWidth > 0 && (
-                  <Rect 
-                    width={photoW} 
-                    height={photoH} 
-                    stroke={borderColor} 
-                    strokeWidth={borderWidth} 
-                    listening={false}
-                  />
-                )}
-              </Group>
+            {photos.map((p) => (
+              <PhotoItem 
+                key={p.id}
+                processedImage={p.processedImage}
+                x={p.x}
+                y={p.y}
+                width={photoW}
+                height={photoH}
+                backgroundColor={backgroundColor}
+                borderColor={borderColor}
+                borderWidth={borderWidth}
+              />
             ))}
           </Layer>
         </Stage>

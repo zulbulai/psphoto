@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Stage, Layer, Image as KonvaImage, Rect, Portal } from 'react-konva';
+import { Stage, Layer, Image as KonvaImage, Rect } from 'react-konva';
 import useImage from 'use-image';
 import { useStore } from '../store/useStore';
 import { Check, X, RotateCcw, ZoomIn, ZoomOut, Maximize } from 'lucide-react';

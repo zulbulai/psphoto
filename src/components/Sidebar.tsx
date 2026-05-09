@@ -214,19 +214,6 @@ export const Sidebar: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-600">Quantity</label>
-              <div className="flex items-center h-8 bg-slate-50 rounded-lg border border-slate-100 px-1">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-1 hover:text-blue-500"><Minus size={14}/></button>
-                <input 
-                  type="number" 
-                  value={quantity} 
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                  className="w-full text-center bg-transparent text-xs font-medium focus:outline-none"
-                />
-                <button onClick={() => setQuantity(quantity + 1)} className="p-1 hover:text-blue-500"><Plus size={14}/></button>
-              </div>
-            </div>
           </div>
 
           <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 group cursor-pointer" onClick={() => setAutoFill(!autoFill)}>
