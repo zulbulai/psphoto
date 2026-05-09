@@ -1,28 +1,28 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
 import { 
+  Menu,
   Download, 
   Printer, 
-  Share2, 
-  Undo, 
-  Redo, 
-  Image as ImageIcon,
-  FileDown
+  ImageIcon,
+  Share2,
+  Info,
+  Layers,
+  Zap
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import { convertToMm } from '../lib/utils';
+import { motion } from 'motion/react';
 
-export const Header: React.FC = () => {
-  const { pageSize, orientation } = useStore();
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+  const { pageSize, orientation, items } = useStore();
 
   const exportAsPDF = async () => {
     const element = document.getElementById('print-area');
     if (!element) return;
-
-    // Use jsPDF directly with the high-res canvas if possible, 
-    // but for this implementation we'll use the browser print approach 
-    // or direct canvas image capture.
-    
     const canvas = element.querySelector('canvas');
     if (canvas) {
       const isPortrait = orientation === 'portrait';
@@ -37,7 +37,7 @@ export const Header: React.FC = () => {
 
       const imgData = canvas.toDataURL('image/jpeg', 1.0);
       pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
-      pdf.save('passport-photo-sheet.pdf');
+      pdf.save(`PassportProject_${new Date().toLocaleDateString()}.pdf`);
     }
   };
 
@@ -46,42 +46,62 @@ export const Header: React.FC = () => {
     const canvas = element?.querySelector('canvas');
     if (canvas) {
       const link = document.createElement('a');
-      link.download = 'passport-photo-sheet.jpg';
+      link.download = `PassportProject_${new Date().toLocaleDateString()}.jpg`;
       link.href = canvas.toDataURL('image/jpeg', 1.0);
       link.click();
     }
   };
 
   return (
-    <header className="h-14 border-b border-slate-200 bg-white flex items-center justify-between px-6 z-20">
+    <header className="h-16 lg:h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-40">
       <div className="flex items-center gap-4">
-        <div className="flex bg-slate-100 p-1 rounded-lg">
-          <button className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors"><Undo size={16}/></button>
-          <button className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors"><Redo size={16}/></button>
+        <button 
+          onClick={onMenuClick}
+          className="lg:hidden p-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors"
+        >
+          <Menu size={20} />
+        </button>
+        
+        <div className="hidden sm:flex items-center gap-6">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-xl">
+             <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+             <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest leading-none">Ready for Print</span>
+          </div>
+          <div className="h-4 w-px bg-slate-200" />
+          <div className="flex flex-col">
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Current Session</span>
+            <span className="text-xs font-bold text-slate-800">Print_Project_{items.length}</span>
+          </div>
         </div>
-        <div className="h-4 w-px bg-slate-200" />
-        <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">300 DPI Rendering</span>
       </div>
 
-      <div className="flex items-center gap-3">
-        <button 
-           onClick={exportAsJPG}
-           className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 flex items-center gap-2 hover:bg-slate-50 transition-colors"
-        >
-          <ImageIcon size={14} /> Export JPG
-        </button>
-        <button 
-           onClick={exportAsPDF}
-           className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 flex items-center gap-2 hover:bg-slate-50 transition-colors"
-        >
-          <FileDown size={14} /> Save PDF
-        </button>
-        <button 
-           onClick={() => window.print()}
-           className="h-9 px-4 bg-blue-600 text-white rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-sm"
-        >
-          <Printer size={14} /> Send to Print
-        </button>
+      <div className="flex items-center gap-2 lg:gap-4">
+        <div className="hidden md:flex items-center gap-2 mr-2">
+           <button className="p-2.5 text-slate-400 hover:text-slate-900 transition-colors" title="Quick Share">
+              <Share2 size={20} />
+           </button>
+           <button className="p-2.5 text-slate-400 hover:text-slate-900 transition-colors" title="Tool Information">
+              <Info size={20} />
+           </button>
+        </div>
+
+        <div className="h-8 w-px bg-slate-200 hidden md:block mx-2" />
+
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={exportAsJPG}
+            className="flex items-center gap-2 px-4 py-2.5 lg:px-5 lg:py-3 bg-white border-2 border-slate-200 text-slate-900 rounded-2xl text-xs font-black uppercase tracking-widest hover:border-slate-900 transition-all active:scale-95"
+          >
+            <ImageIcon size={16} /> <span className="hidden sm:inline">JPG</span>
+          </button>
+
+          <button 
+            onClick={exportAsPDF}
+            className="flex items-center gap-2 px-4 py-2.5 lg:px-6 lg:py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95 group"
+          >
+            <Printer size={16} className="group-hover:rotate-12 transition-transform" /> <span className="hidden sm:inline">Print to PDF</span>
+          </button>
+        </div>
       </div>
     </header>
   );

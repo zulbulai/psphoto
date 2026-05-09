@@ -1,9 +1,10 @@
-import React, { useRef, useMemo, useEffect, useState } from 'react';
-import { Stage, Layer, Rect, Image as KonvaImage, Group } from 'react-konva';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
+import { Stage, Layer, Image as KonvaImage, Rect, Group } from 'react-konva';
 import useImage from 'use-image';
 import { useStore } from '../store/useStore';
 import { convertToPx, MM_TO_INCH, DPI } from '../lib/utils';
-import { Layout } from 'lucide-react';
+import { Layout, ZoomIn, ZoomOut, Maximize, Ruler } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 // Sub-component to handle individual photo rendering safely with hooks
 const PhotoItem: React.FC<{
@@ -68,7 +69,6 @@ export const Workspace: React.FC = () => {
   const pageW = convertToPx(isPortrait ? pageSize.width : pageSize.height, pageSize.unit);
   const pageH = convertToPx(isPortrait ? pageSize.height : pageSize.width, pageSize.unit);
 
-  // Photo dimensions in PX
   const photoW = convertToPx(photoSize.width, photoSize.unit);
   const photoH = convertToPx(photoSize.height, photoSize.unit);
 
@@ -76,7 +76,6 @@ export const Workspace: React.FC = () => {
   const spacingPx = convertToPx(spacing, 'mm');
   const marginPx = convertToPx(margin, 'mm');
 
-  // Calculate grid
   const availableW = pageW - (marginPx * 2);
   const availableH = pageH - (marginPx * 2);
 
@@ -129,87 +128,101 @@ export const Workspace: React.FC = () => {
   // Adjust preview scaling to fit container
   useEffect(() => {
     const updateScale = () => {
-      if (!containerRef.current) return;
-      const { clientWidth, clientHeight } = containerRef.current;
-      const padding = 40;
-      const scaleX = (clientWidth - padding) / pageW;
-      const scaleY = (clientHeight - padding) / pageH;
-      setScale(Math.min(scaleX, scaleY, 1));
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
+        const padding = 64; // 2rem p-8 on each side
+        const availableW = width - padding;
+        const availableH = height - padding;
+        
+        const scaleX = availableW / pageW;
+        const scaleY = availableH / pageH;
+        setScale(Math.min(scaleX, scaleY, 1));
+      }
     };
 
     updateScale();
     window.addEventListener('resize', updateScale);
     return () => window.removeEventListener('resize', updateScale);
-  }, [pageW, pageH]);
+  }, [pageW, pageH, items]);
 
   return (
-    <div ref={containerRef} className="flex-1 bg-slate-100 flex items-center justify-center p-8 overflow-hidden relative group">
+    <div ref={containerRef} className="flex-1 bg-slate-100 flex items-center justify-center p-4 lg:p-8 overflow-hidden relative group">
       {/* HUD Info */}
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 pointer-events-none">
-        <div className="bg-white/95 backdrop-blur border border-slate-200 rounded-xl px-4 py-3 shadow-xl text-[11px] space-y-2 min-w-[180px]">
-          <p className="text-blue-600 font-bold uppercase tracking-widest border-b border-blue-100 pb-1.5 flex justify-between">
-            Sheet Analysis <Layout size={12} className="inline ml-2" />
-          </p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-3 pointer-events-none w-full max-w-[200px] sm:max-w-none">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl px-4 py-4 shadow-xl shadow-slate-200/50 text-[11px] space-y-3"
+        >
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <p className="text-slate-900 font-black uppercase tracking-widest flex items-center gap-2">
+              <Layout size={14} className="text-blue-600" /> Analysis
+            </p>
+            <span className="text-[10px] h-5 px-2 bg-blue-600 text-white rounded-full flex items-center font-bold">
+              {actualQuantity} Units
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <div>
-              <p className="text-slate-400 font-medium">Page Size</p>
-              <p className="text-slate-900 font-semibold">{pageSize.name}</p>
+              <p className="text-slate-400 font-bold uppercase text-[9px] tracking-tighter">Paper</p>
+              <p className="text-slate-900 font-black truncate">{pageSize.name}</p>
             </div>
             <div>
-              <p className="text-slate-400 font-medium">Photo Size</p>
-              <p className="text-slate-900 font-semibold">{photoSize.width}x{photoSize.height}{photoSize.unit}</p>
+              <p className="text-slate-400 font-bold uppercase text-[9px] tracking-tighter">Photo Size</p>
+              <p className="text-slate-900 font-black">{photoSize.width}x{photoSize.height}{photoSize.unit}</p>
             </div>
             <div>
-              <p className="text-slate-400 font-medium">Layout</p>
-              <p className="text-slate-900 font-semibold">{cols} × {rows}</p>
+              <p className="text-slate-400 font-bold uppercase text-[9px] tracking-tighter">Grid</p>
+              <p className="text-slate-900 font-black">{cols} × {rows}</p>
             </div>
             <div>
-              <p className="text-slate-400 font-medium">Utility</p>
-              <p className="text-slate-900 font-semibold text-blue-600">
+              <p className="text-slate-400 font-bold uppercase text-[9px] tracking-tighter">Efficiency</p>
+              <p className="text-blue-600 font-black">
                 {Math.round((actualQuantity / totalSlots) * 100)}%
               </p>
             </div>
           </div>
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-slate-500 font-bold">Total Photos</span>
-            <span className="text-lg font-black text-slate-900">{actualQuantity}</span>
-          </div>
-        </div>
+        </motion.div>
 
-        <div className="bg-slate-900 text-white rounded-lg px-3 py-1.5 shadow-lg text-[10px] font-mono flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            300 DPI High-Precision Output
+        <div className="flex gap-2">
+          <div className="bg-slate-900 text-white rounded-xl px-3 py-1.5 shadow-lg text-[10px] font-black tracking-widest flex items-center gap-2 border border-slate-800">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              HI-RES 300DPI
+          </div>
+          <div className="hidden sm:flex bg-white/95 border border-slate-200 rounded-xl px-2 py-1.5 shadow-sm text-[10px] font-black text-slate-500 items-center gap-1">
+            <Ruler size={10} /> 1:1 Scale
+          </div>
         </div>
       </div>
 
-      {/* Main Print Stage (Print Area) */}
+      {/* Floating Zoom Controls - Mobile friendly */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/90 backdrop-blur border border-slate-200 rounded-2xl p-1.5 shadow-xl z-20">
+         <button className="p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-colors"><ZoomOut size={18}/></button>
+         <div className="w-px h-4 bg-slate-200 mx-1" />
+         <span className="text-[10px] font-black text-slate-900 min-w-[40px] text-center">{Math.round(scale * 100)}%</span>
+         <div className="w-px h-4 bg-slate-200 mx-1" />
+         <button className="p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-colors"><ZoomIn size={18}/></button>
+         <button onClick={() => setScale(1)} className="p-2 bg-slate-900 text-white rounded-xl shadow-lg hover:bg-slate-800 transition-all"><Maximize size={18}/></button>
+      </div>
+
+      {/* Stage Container */}
       <div 
-        id="print-area"
+        className="relative shadow-2xl transition-transform duration-300 ease-out origin-center bg-white"
         style={{ 
-          width: pageW, 
-          height: pageH, 
-          transform: `scale(${scale})`, 
-          transformOrigin: 'center center',
-          boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)',
-          backgroundColor: 'white',
-          position: 'relative'
+          transform: `scale(${scale})`,
+          width: pageW,
+          height: pageH
         }}
-        className="transition-transform duration-300 ease-out"
+        id="print-area"
       >
         <Stage width={pageW} height={pageH}>
           <Layer>
-            {/* Background for whole page */}
-            <Rect x={0} y={0} width={pageW} height={pageH} fill="#ffffff" />
-            
-            {/* Printable margins indicator (only visible on screen) */}
+            {/* Sheet Background */}
             <Rect 
-              x={marginPx} 
-              y={marginPx} 
-              width={availableW} 
-              height={availableH} 
-              stroke="#e2e8f0" 
-              strokeWidth={1} 
-              dash={[10, 10]}
+              width={pageW} 
+              height={pageH} 
+              fill="white" 
               listening={false}
             />
 
