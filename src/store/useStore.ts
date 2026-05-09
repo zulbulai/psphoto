@@ -60,6 +60,8 @@ interface AppState {
   borderColor: string;
   spacing: number;
   margin: number;
+  showDate: boolean;
+  customText: string;
   
   // UI
   isCropping: boolean;
@@ -72,6 +74,7 @@ interface AppState {
   // Actions
   addItem: (image: string) => void;
   removeItem: (id: string) => void;
+  clearAllItems: () => void;
   updateItemQuantity: (id: string, q: number) => void;
   updateItemImage: (id: string, processedImage: string) => void;
   setPhotoSize: (size: PhotoSize) => void;
@@ -83,6 +86,8 @@ interface AppState {
   setBorderColor: (color: string) => void;
   setSpacing: (s: number) => void;
   setMargin: (m: number) => void;
+  setShowDate: (show: boolean) => void;
+  setCustomText: (text: string) => void;
   setIsCropping: (cropping: boolean, itemId?: string) => void;
   setCropParams: (params: { x?: number, y?: number, scale?: number, rotation?: number }) => void;
 }
@@ -98,6 +103,8 @@ export const useStore = create<AppState>((set) => ({
   borderColor: '#000000',
   spacing: 5,
   margin: 10,
+  showDate: false,
+  customText: '',
   isCropping: false,
   activeItemId: null,
   cropX: 0,
@@ -116,6 +123,7 @@ export const useStore = create<AppState>((set) => ({
   removeItem: (id) => set((state) => ({
     items: state.items.filter(i => i.id !== id)
   })),
+  clearAllItems: () => set({ items: [] }),
   updateItemQuantity: (id, quantity) => set((state) => ({
     items: state.items.map(i => i.id === id ? { ...i, quantity: Math.max(0, quantity) } : i)
   })),
@@ -131,10 +139,11 @@ export const useStore = create<AppState>((set) => ({
   setBorderColor: (borderColor) => set({ borderColor }),
   setSpacing: (spacing) => set({ spacing }),
   setMargin: (margin) => set({ margin }),
+  setShowDate: (showDate) => set({ showDate }),
+  setCustomText: (customText) => set({ customText }),
   setIsCropping: (isCropping, itemId = null) => set({ 
     isCropping, 
     activeItemId: itemId,
-    // Reset crop params when opening new item
     cropX: 0, cropY: 0, cropScale: 1, cropRotation: 0
   }),
   setCropParams: (params) => set((state) => ({ 

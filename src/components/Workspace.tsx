@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
-import { Stage, Layer, Image as KonvaImage, Rect, Group } from 'react-konva';
+import { Stage, Layer, Image as KonvaImage, Rect, Group, Text } from 'react-konva';
 import useImage from 'use-image';
 import { useStore } from '../store/useStore';
 import { convertToPx, MM_TO_INCH, DPI } from '../lib/utils';
@@ -16,13 +16,19 @@ const PhotoItem: React.FC<{
   backgroundColor: string;
   borderColor: string;
   borderWidth: number;
-}> = ({ processedImage, x, y, width, height, backgroundColor, borderColor, borderWidth }) => {
+  showDate: boolean;
+  customText: string;
+}> = ({ processedImage, x, y, width, height, backgroundColor, borderColor, borderWidth, showDate, customText }) => {
   const [img] = useImage(processedImage);
   
   return (
     <Group x={x} y={y}>
       {/* Background Color */}
-      <Rect width={width} height={height} fill={backgroundColor} />
+      <Rect 
+        width={width} 
+        height={height} 
+        fill={backgroundColor} 
+      />
       
       {/* Image */}
       {img && (
@@ -44,6 +50,36 @@ const PhotoItem: React.FC<{
           listening={false}
         />
       )}
+
+      {/* Labels */}
+      {(showDate || customText) && (
+        <Group y={height + 1}>
+           {customText && (
+             <Text 
+                text={customText}
+                width={width}
+                height={10}
+                fontSize={8}
+                fontFamily="Inter"
+                fontStyle="bold"
+                align="center"
+                fill={borderColor}
+             />
+           )}
+           {showDate && (
+             <Text 
+                text={new Date().toLocaleDateString()}
+                y={customText ? 10 : 0}
+                width={width}
+                fontSize={6}
+                fontFamily="Inter"
+                align="center"
+                fill={borderColor}
+                opacity={0.6}
+             />
+           )}
+        </Group>
+      )}
     </Group>
   );
 };
@@ -61,7 +97,10 @@ export const Workspace: React.FC = () => {
     borderWidth,
     borderColor,
     spacing,
-    margin
+    margin,
+    roundedCorners,
+    showDate,
+    customText
   } = useStore();
 
   // Page dimensions in PX (300 DPI)
@@ -79,8 +118,12 @@ export const Workspace: React.FC = () => {
   const availableW = pageW - (marginPx * 2);
   const availableH = pageH - (marginPx * 2);
 
-  const cols = Math.floor((availableW + spacingPx) / (photoW + spacingPx));
-  const rows = Math.floor((availableH + spacingPx) / (photoH + spacingPx));
+  const labelHeightPx = (showDate || customText) ? convertToPx(5, 'mm') : 0;
+  const slotW = photoW;
+  const slotH = photoH + labelHeightPx;
+
+  const cols = Math.floor((availableW + spacingPx) / (slotW + spacingPx));
+  const rows = Math.floor((availableH + spacingPx) / (slotH + spacingPx));
   const totalSlots = cols * rows;
 
   // Flatten items into a single list of photos
@@ -97,8 +140,8 @@ export const Workspace: React.FC = () => {
             list.push({
                 id: `${item.id}-${q}`,
                 processedImage: item.processedImage,
-                x: marginPx + c * (photoW + spacingPx),
-                y: marginPx + r * (photoH + spacingPx)
+                x: marginPx + c * (slotW + spacingPx),
+                y: marginPx + r * (slotH + spacingPx)
             });
             slotIndex++;
         }
@@ -113,15 +156,15 @@ export const Workspace: React.FC = () => {
             list.push({
                 id: `fill-${slotIndex}`,
                 processedImage: lastItem.processedImage,
-                x: marginPx + c * (photoW + spacingPx),
-                y: marginPx + r * (photoH + spacingPx)
+                x: marginPx + c * (slotW + spacingPx),
+                y: marginPx + r * (slotH + spacingPx)
             });
             slotIndex++;
         }
     }
     
     return list;
-  }, [items, autoFill, totalSlots, cols, marginPx, photoW, photoH, spacingPx]);
+  }, [items, autoFill, totalSlots, cols, marginPx, slotW, slotH, spacingPx]);
 
   const actualQuantity = photos.length;
 
@@ -197,13 +240,38 @@ export const Workspace: React.FC = () => {
       </div>
 
       {/* Floating Zoom Controls - Mobile friendly */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/90 backdrop-blur border border-slate-200 rounded-2xl p-1.5 shadow-xl z-20">
-         <button className="p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-colors"><ZoomOut size={18}/></button>
-         <div className="w-px h-4 bg-slate-200 mx-1" />
-         <span className="text-[10px] font-black text-slate-900 min-w-[40px] text-center">{Math.round(scale * 100)}%</span>
-         <div className="w-px h-4 bg-slate-200 mx-1" />
-         <button className="p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-colors"><ZoomIn size={18}/></button>
-         <button onClick={() => setScale(1)} className="p-2 bg-slate-900 text-white rounded-xl shadow-lg hover:bg-slate-800 transition-all"><Maximize size={18}/></button>
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/90 backdrop-blur border border-slate-200 rounded-3xl p-2 shadow-2xl z-20">
+         <button 
+           onClick={() => setScale(prev => Math.max(0.1, prev - 0.1))}
+           className="p-2.5 hover:bg-slate-100 rounded-2xl text-slate-600 transition-colors"
+         >
+           <ZoomOut size={20}/>
+         </button>
+         <div className="w-px h-6 bg-slate-200 mx-1" />
+         <div className="px-3 min-w-[60px] text-center">
+            <span className="text-[11px] font-black text-slate-900">{Math.round(scale * 100)}%</span>
+         </div>
+         <div className="w-px h-6 bg-slate-200 mx-1" />
+         <button 
+           onClick={() => setScale(prev => Math.min(3, prev + 0.1))}
+           className="p-2.5 hover:bg-slate-100 rounded-2xl text-slate-600 transition-colors"
+         >
+           <ZoomIn size={20}/>
+         </button>
+         <button 
+           onClick={() => {
+              if (containerRef.current) {
+                const { width, height } = containerRef.current.getBoundingClientRect();
+                const padding = 64;
+                const scaleX = (width - padding) / pageW;
+                const scaleY = (height - padding) / pageH;
+                setScale(Math.min(scaleX, scaleY, 1));
+              }
+           }} 
+           className="p-2.5 bg-slate-900 text-white rounded-2xl shadow-lg hover:bg-slate-800 transition-all hover:scale-110 active:scale-95"
+         >
+           <Maximize size={20}/>
+         </button>
       </div>
 
       {/* Stage Container */}
@@ -237,6 +305,8 @@ export const Workspace: React.FC = () => {
                 backgroundColor={backgroundColor}
                 borderColor={borderColor}
                 borderWidth={borderWidth}
+                showDate={showDate}
+                customText={customText}
               />
             ))}
           </Layer>

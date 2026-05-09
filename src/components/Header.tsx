@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="h-16 lg:h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-40">
+    <header className="h-16 lg:h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-40 sticky top-0">
       <div className="flex items-center gap-4">
         <button 
           onClick={onMenuClick}
@@ -63,14 +63,14 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         </button>
         
         <div className="hidden sm:flex items-center gap-6">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-xl">
-             <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-             <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest leading-none">Ready for Print</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-100">
+             <Zap size={14} fill="currentColor" />
+             <span className="text-[10px] font-black uppercase tracking-widest leading-none">Studio Pro</span>
           </div>
           <div className="h-4 w-px bg-slate-200" />
           <div className="flex flex-col">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Current Session</span>
-            <span className="text-xs font-bold text-slate-800">Print_Project_{items.length}</span>
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">Active Output</span>
+            <span className="text-xs font-bold text-slate-800 leading-none">300 DPI Rendering</span>
           </div>
         </div>
       </div>

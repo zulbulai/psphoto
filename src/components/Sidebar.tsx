@@ -23,6 +23,7 @@ export const Sidebar: React.FC = () => {
     items,
     addItem,
     removeItem,
+    clearAllItems,
     updateItemQuantity,
     photoSize,
     setPhotoSize,
@@ -42,6 +43,10 @@ export const Sidebar: React.FC = () => {
     setSpacing,
     margin,
     setMargin,
+    showDate,
+    setShowDate,
+    customText,
+    setCustomText,
     setIsCropping
   } = useStore();
 
@@ -105,7 +110,17 @@ export const Sidebar: React.FC = () => {
               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <Sparkles size={12} /> Photo Library
               </h3>
-              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{items.length} Images</span>
+              <div className="flex items-center gap-2">
+                {items.length > 0 && (
+                  <button 
+                    onClick={clearAllItems}
+                    className="text-[9px] font-black text-red-500 hover:text-red-700 uppercase tracking-widest px-2 py-1 bg-red-50 rounded-lg transition-colors"
+                  >
+                    Clear All
+                  </button>
+                )}
+                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{items.length} Images</span>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -317,6 +332,38 @@ export const Sidebar: React.FC = () => {
                       onChange={(e) => setBorderWidth(parseInt(e.target.value))}
                       className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" 
                     />
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <p className="text-[11px] font-black text-slate-700 uppercase">Print Date</p>
+                      <p className="text-[9px] font-bold text-slate-400">Add timestamp below photos</p>
+                    </div>
+                    <button 
+                      onClick={() => setShowDate(!showDate)}
+                      className={cn(
+                        "w-10 h-5 rounded-full transition-all relative",
+                        showDate ? "bg-blue-600" : "bg-slate-200"
+                      )}
+                    >
+                      <div className={cn(
+                        "absolute top-1 w-3 h-3 bg-white rounded-full transition-all",
+                        showDate ? "left-6" : "left-1"
+                      )} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-black text-slate-700 uppercase">Custom Label</p>
+                    <input 
+                      type="text"
+                      value={customText}
+                      onChange={(e) => setCustomText(e.target.value)}
+                      placeholder="e.g. John Doe / USA"
+                      className="w-full h-10 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
