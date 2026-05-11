@@ -6,6 +6,7 @@ import { Check, X, RotateCcw, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 
 export const CropTool: React.FC = () => {
   const { 
+    mode,
     isCropping, 
     setIsCropping, 
     items,
@@ -54,7 +55,7 @@ export const CropTool: React.FC = () => {
   };
 
   const photoRatio = photoSize.width / photoSize.height;
-  const stageW = 400;
+  const stageW = Math.min(window.innerWidth - 80, 400);
   const stageH = stageW / photoRatio;
 
   const handleWheel = (e: any) => {
@@ -81,9 +82,9 @@ export const CropTool: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 sm:p-8">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white pt-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-2 sm:p-8 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-200">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
           <div className="flex flex-col">
             <h3 className="font-black text-slate-900 uppercase tracking-tighter">Precision Alignment</h3>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Use mouse wheel or slider to zoom</p>
@@ -93,8 +94,8 @@ export const CropTool: React.FC = () => {
           </button>
         </div>
 
-        <div className="p-4 sm:p-8 flex flex-col items-center gap-6">
-          <div className="relative border-8 border-slate-100 shadow-2xl bg-white rounded-xl overflow-hidden cursor-move ring-1 ring-slate-200">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center gap-6 custom-scrollbar">
+          <div className="relative border-8 border-slate-100 shadow-2xl bg-white rounded-xl overflow-hidden cursor-move ring-1 ring-slate-200 shrink-0">
             <Stage 
                 width={stageW} 
                 height={stageH} 
@@ -123,24 +124,40 @@ export const CropTool: React.FC = () => {
               </Layer>
             </Stage>
             
-            {/* Professional Passport Framing Guides */}
+            {/* Professional Framing Guides */}
             <div className="absolute inset-0 pointer-events-none">
                  <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-slate-900/60 backdrop-blur-sm rounded-full">
                     <p className="text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-2">
                        <Maximize size={10} /> Drag to position image
                     </p>
                  </div>
+                 
+                 {mode === 'passport' ? (
+                   /* Passport Face Guides */
+                   <div className="absolute inset-0 flex items-center justify-center">
+                     <div className="w-[65%] h-[80%] border-2 border-dashed border-blue-400/40 rounded-[50%_50%_45%_45%] relative">
+                        <div className="absolute top-[30%] w-full border-t border-blue-400/20" />
+                        <div className="absolute bottom-[20%] left-1/2 -translate-x-1/2 w-[40%] border-b-2 border-blue-400/40" />
+                     </div>
+                   </div>
+                 ) : (
+                   /* Aadhaar Card Boundary Guide */
+                   <div className="absolute inset-[5%] border-2 border-dashed border-blue-400/50 rounded-lg flex items-center justify-center">
+                      <div className="text-[10px] font-black text-blue-500/50 uppercase tracking-[0.2em]">Align Card Boundary</div>
+                   </div>
+                 )}
+
                  {/* Rule of Thirds Grid */}
                  <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
-                    <div className="border-r border-b border-blue-400/30" />
-                    <div className="border-r border-b border-blue-400/30" />
-                    <div className="border-b border-blue-400/30" />
-                    <div className="border-r border-b border-blue-400/30" />
-                    <div className="border-r border-b border-blue-400/30" />
-                    <div className="border-b border-blue-400/30" />
-                    <div className="border-r border-blue-400/30" />
-                    <div className="border-r border-blue-400/30" />
-                    <div className="border-blue-400/30" />
+                    <div className="border-r border-b border-blue-400/10" />
+                    <div className="border-r border-b border-blue-400/10" />
+                    <div className="border-b border-blue-400/10" />
+                    <div className="border-r border-b border-blue-400/10" />
+                    <div className="border-r border-b border-blue-400/10" />
+                    <div className="border-b border-blue-400/10" />
+                    <div className="border-r border-blue-400/10" />
+                    <div className="border-r border-blue-400/10" />
+                    <div className="border-blue-400/10" />
                  </div>
                  
                  {/* Center Crosshair */}
@@ -197,7 +214,7 @@ export const CropTool: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-5 bg-slate-50 border-t border-slate-100 flex justify-end gap-4">
+        <div className="p-5 bg-slate-50 border-t border-slate-100 flex justify-end gap-4 shrink-0">
           <button 
             onClick={() => setIsCropping(false)}
             className="px-6 h-10 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-white transition-colors"

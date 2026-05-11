@@ -8,11 +8,24 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Workspace } from './components/Workspace';
 import { CropTool } from './components/CropTool';
+import { Home } from './components/Home';
+import { useStore } from './store/useStore';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState<'home' | 'editor'>('home');
+  const { setMode } = useStore();
+
+  const handleStartTool = (mode: 'aadhaar' | 'passport' | 'voter' | 'pan' | 'shram') => {
+    setMode(mode);
+    setCurrentPage('editor');
+  };
+
+  if (currentPage === 'home') {
+    return <Home onStartTool={handleStartTool} />;
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans">
@@ -54,7 +67,10 @@ export default function App() {
       </AnimatePresence>
 
       <div className="flex-1 flex flex-col min-w-0 relative">
-        <Header onMenuClick={() => setIsSidebarOpen(true)} />
+        <Header 
+          onMenuClick={() => setIsSidebarOpen(true)} 
+          onHomeClick={() => setCurrentPage('home')}
+        />
         <Workspace />
         
         {/* Mobile FAB to open settings if sidebar is closed */}

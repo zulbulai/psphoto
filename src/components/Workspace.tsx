@@ -3,7 +3,7 @@ import { Stage, Layer, Image as KonvaImage, Rect, Group, Text } from 'react-konv
 import useImage from 'use-image';
 import { useStore } from '../store/useStore';
 import { convertToPx, MM_TO_INCH, DPI } from '../lib/utils';
-import { Layout, ZoomIn, ZoomOut, Maximize, Ruler } from 'lucide-react';
+import { Layout, ZoomIn, ZoomOut, Maximize, Ruler, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Sub-component to handle individual photo rendering safely with hooks
@@ -88,6 +88,7 @@ export const Workspace: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const {
+    mode,
     items,
     photoSize,
     pageSize,
@@ -98,7 +99,6 @@ export const Workspace: React.FC = () => {
     borderColor,
     spacing,
     margin,
-    roundedCorners,
     showDate,
     customText
   } = useStore();
@@ -133,34 +133,20 @@ export const Workspace: React.FC = () => {
     
     // Add specific quantities from items
     for (const item of items) {
-        for (let q = 0; q < item.quantity; q++) {
+        const itemQuantity = autoFill ? totalSlots : item.quantity;
+        for (let q = 0; q < itemQuantity; q++) {
             if (slotIndex >= totalSlots) break;
             const r = Math.floor(slotIndex / cols);
             const c = slotIndex % cols;
             list.push({
+                ...item,
                 id: `${item.id}-${q}`,
-                processedImage: item.processedImage,
                 x: marginPx + c * (slotW + spacingPx),
                 y: marginPx + r * (slotH + spacingPx)
             });
             slotIndex++;
         }
-    }
-    
-    // Auto fill remaining if enabled
-    if (autoFill && slotIndex < totalSlots && items.length > 0) {
-        const lastItem = items[items.length - 1];
-        while (slotIndex < totalSlots) {
-            const r = Math.floor(slotIndex / cols);
-            const c = slotIndex % cols;
-            list.push({
-                id: `fill-${slotIndex}`,
-                processedImage: lastItem.processedImage,
-                x: marginPx + c * (slotW + spacingPx),
-                y: marginPx + r * (slotH + spacingPx)
-            });
-            slotIndex++;
-        }
+        if (autoFill) break; // If auto-filling, we only need to process one "batch" template
     }
     
     return list;
@@ -188,6 +174,33 @@ export const Workspace: React.FC = () => {
     return () => window.removeEventListener('resize', updateScale);
   }, [pageW, pageH, items]);
 
+  const EMBEDDED_TOOLS: Record<string, { url: string; title: string }> = {
+    aadhaar: { url: "https://ecardcutter.in/aadhaar-crop", title: "Aadhaar Tool" },
+    voter: { url: "https://ecardcutter.in/voterid-crop", title: "Voter ID Tool" },
+    pan: { url: "https://ecardcutter.in/pan-crop", title: "PAN Card Tool" },
+    shram: { url: "https://ecardcutter.in/e-shram-crop", title: "E-Shram Tool" }
+  };
+
+  if (mode in EMBEDDED_TOOLS) {
+    const tool = EMBEDDED_TOOLS[mode];
+    return (
+      <div className="flex-1 bg-slate-100 flex flex-col relative">
+        <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
+           <div className="bg-slate-900 text-white rounded-xl px-3 py-1.5 shadow-lg text-[10px] font-black tracking-widest flex items-center gap-2 border border-slate-800">
+              <Sparkles size={12} className="text-blue-400" />
+              EXTERNAL SMART TOOL: {tool.title.toUpperCase()}
+           </div>
+        </div>
+        <iframe 
+          src={tool.url} 
+          className="w-full h-full border-none"
+          title={tool.title}
+          allow="camera; microphone"
+        />
+      </div>
+    );
+  }
+
   return (
     <div ref={containerRef} className="flex-1 bg-slate-100 flex items-center justify-center p-4 lg:p-8 overflow-hidden relative group">
       {/* HUD Info */}
@@ -199,7 +212,7 @@ export const Workspace: React.FC = () => {
         >
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <p className="text-slate-900 font-black uppercase tracking-widest flex items-center gap-2">
-              <Layout size={14} className="text-blue-600" /> Analysis
+              <Layout size={14} className="text-blue-600" /> Portrait Analysis
             </p>
             <span className="text-[10px] h-5 px-2 bg-blue-600 text-white rounded-full flex items-center font-bold">
               {actualQuantity} Units
@@ -225,6 +238,15 @@ export const Workspace: React.FC = () => {
                 {Math.round((actualQuantity / totalSlots) * 100)}%
               </p>
             </div>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100">
+             <div className="flex items-center gap-2 text-blue-600">
+                <Sparkles size={12} className="shrink-0" />
+                <p className="text-[9px] font-black uppercase leading-tight">
+                   {actualQuantity >= totalSlots ? 'Sheet is Fully Utilized' : `Can Fit ${totalSlots} items total`}
+                </p>
+             </div>
           </div>
         </motion.div>
 

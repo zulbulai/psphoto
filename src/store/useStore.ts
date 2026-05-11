@@ -19,19 +19,20 @@ export interface PageSize {
 }
 
 export const PHOTO_PRESETS: PhotoSize[] = [
-  { id: '35x45', name: '35x45 mm (Standard)', width: 35, height: 45, unit: 'mm' },
+  { id: 'pass-std', name: '35x45 mm (Standard Passport)', width: 35, height: 45, unit: 'mm' },
+  { id: 'aadhaar-cr80', name: 'Aadhaar (Card Size) 85.6x54mm', width: 85.6, height: 54, unit: 'mm' },
   { id: '2x2', name: '2x2 inch (US Passport)', width: 2, height: 2, unit: 'inch' },
-  { id: '25x35', name: '25x35 mm', width: 25, height: 35, unit: 'mm' },
+  { id: 'aadhaar-small', name: 'Aadhaar (Wallet) 70x45mm', width: 70, height: 45, unit: 'mm' },
+  { id: 'aadhaar-long', name: 'Aadhaar (Full Strip) 160x65mm', width: 160, height: 65, unit: 'mm' },
+  { id: '25x35', name: '25x35 mm (Small Passport)', width: 25, height: 35, unit: 'mm' },
   { id: '30x40', name: '30x40 mm', width: 30, height: 40, unit: 'mm' },
-  { id: '40x50', name: '40x50 mm', width: 40, height: 50, unit: 'mm' },
-  { id: '45x45', name: '45x45 mm', width: 45, height: 45, unit: 'mm' },
-  { id: '50x50', name: '50x50 mm', width: 50, height: 50, unit: 'mm' },
   { id: 'custom', name: 'Custom Size...', width: 35, height: 45, unit: 'mm' },
 ];
 
 export const PAGE_PRESETS: PageSize[] = [
   { id: 'a4', name: 'A4', width: 210, height: 297, unit: 'mm' },
   { id: '4x6', name: '4x6 inch (102x152 mm)', width: 101.6, height: 152.4, unit: 'mm' },
+  { id: 'pvc', name: 'PVC Sheet', width: 86, height: 55, unit: 'mm' },
   { id: '5x7', name: '5x7 inch (127x178 mm)', width: 127, height: 177.8, unit: 'mm' },
   { id: 'letter', name: 'Letter', width: 215.9, height: 279.4, unit: 'mm' },
   { id: 'custom', name: 'Custom Size...', width: 210, height: 297, unit: 'mm' },
@@ -45,6 +46,8 @@ export interface PrintItem {
 }
 
 interface AppState {
+  mode: 'passport' | 'aadhaar' | 'voter' | 'pan' | 'shram';
+  setMode: (mode: 'passport' | 'aadhaar' | 'voter' | 'pan' | 'shram') => void;
   // Items
   items: PrintItem[];
   
@@ -71,6 +74,10 @@ interface AppState {
   cropScale: number;
   cropRotation: number;
   
+  // Aadhaar Specific
+  aadhaarResult: { front: string | null; back: string | null; fullPage: string | null } | null;
+  aadhaarBorder: 'none' | 'thin' | 'thick';
+  
   // Actions
   addItem: (image: string) => void;
   removeItem: (id: string) => void;
@@ -90,9 +97,27 @@ interface AppState {
   setCustomText: (text: string) => void;
   setIsCropping: (cropping: boolean, itemId?: string) => void;
   setCropParams: (params: { x?: number, y?: number, scale?: number, rotation?: number }) => void;
+  setAadhaarResult: (result: { front: string; back: string } | null) => void;
+  setAadhaarBorder: (border: 'none' | 'thin' | 'thick') => void;
 }
 
 export const useStore = create<AppState>((set) => ({
+  mode: 'aadhaar',
+  setMode: (mode) => set((state) => {
+    // Determine default photo size for the new mode
+    let defaultPhotoSize = PHOTO_PRESETS.find(p => p.id === 'pass-std')!;
+    
+    if (mode === 'aadhaar') {
+      defaultPhotoSize = PHOTO_PRESETS.find(p => p.id === 'aadhaar-cr80')!;
+    } else if (mode === 'voter' || mode === 'pan' || mode === 'shram') {
+      defaultPhotoSize = PHOTO_PRESETS.find(p => p.id === 'aadhaar-cr80')!; // Standard ID size
+    }
+    
+    return { 
+      mode,
+      photoSize: defaultPhotoSize
+    };
+  }),
   items: [],
   photoSize: PHOTO_PRESETS[0],
   pageSize: PAGE_PRESETS[0],
@@ -111,6 +136,9 @@ export const useStore = create<AppState>((set) => ({
   cropY: 0,
   cropScale: 1,
   cropRotation: 0,
+  
+  aadhaarResult: null,
+  aadhaarBorder: 'none',
 
   addItem: (image) => set((state) => ({
     items: [...state.items, {
@@ -152,4 +180,6 @@ export const useStore = create<AppState>((set) => ({
     cropScale: params.scale ?? state.cropScale,
     cropRotation: params.rotation ?? state.cropRotation
   })),
+  setAadhaarResult: (aadhaarResult: { front: string | null; back: string | null; fullPage: string | null } | null) => set({ aadhaarResult }),
+  setAadhaarBorder: (aadhaarBorder) => set({ aadhaarBorder }),
 }));

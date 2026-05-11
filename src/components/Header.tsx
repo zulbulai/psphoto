@@ -8,17 +8,19 @@ import {
   Share2,
   Info,
   Layers,
-  Zap
+  Zap,
+  Home as HomeIcon
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { motion } from 'motion/react';
 
 interface HeaderProps {
   onMenuClick: () => void;
+  onHomeClick: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
-  const { pageSize, orientation, items } = useStore();
+export const Header: React.FC<HeaderProps> = ({ onMenuClick, onHomeClick }) => {
+  const { pageSize, orientation, items, mode } = useStore();
 
   const exportAsPDF = async () => {
     const element = document.getElementById('print-area');
@@ -37,7 +39,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
       const imgData = canvas.toDataURL('image/jpeg', 1.0);
       pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
-      pdf.save(`PassportProject_${new Date().toLocaleDateString()}.pdf`);
+      pdf.save(`${mode === 'aadhaar' ? 'Aadhaar' : 'Passport'}_Layout_${new Date().toLocaleDateString()}.pdf`);
     }
   };
 
@@ -46,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     const canvas = element?.querySelector('canvas');
     if (canvas) {
       const link = document.createElement('a');
-      link.download = `PassportProject_${new Date().toLocaleDateString()}.jpg`;
+      link.download = `${mode === 'aadhaar' ? 'Aadhaar' : 'Passport'}_Layout_${new Date().toLocaleDateString()}.jpg`;
       link.href = canvas.toDataURL('image/jpeg', 1.0);
       link.click();
     }
@@ -55,6 +57,14 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   return (
     <header className="h-16 lg:h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-40 sticky top-0">
       <div className="flex items-center gap-4">
+        <button 
+          onClick={onHomeClick}
+          className="p-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200"
+          title="Back to Home"
+        >
+          <HomeIcon size={20} />
+        </button>
+
         <button 
           onClick={onMenuClick}
           className="lg:hidden p-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors"
@@ -65,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         <div className="hidden sm:flex items-center gap-6">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-100">
              <Zap size={14} fill="currentColor" />
-             <span className="text-[10px] font-black uppercase tracking-widest leading-none">Studio Pro</span>
+             <span className="text-[10px] font-black uppercase tracking-widest leading-none">{mode === 'aadhaar' ? 'Aadhaar Print Layout Pro' : 'Passport Studio Pro'}</span>
           </div>
           <div className="h-4 w-px bg-slate-200" />
           <div className="flex flex-col">
